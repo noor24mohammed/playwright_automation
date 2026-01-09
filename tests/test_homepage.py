@@ -90,3 +90,4 @@ async def test_login(login_data):
 		await image_card.wait_for(state="visible", timeout=5000)
 		
 		
+		
