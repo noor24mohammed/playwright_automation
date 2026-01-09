@@ -88,3 +88,6 @@ async def test_login(login_data):
         await page.locator("a.back.d-flex").first.click()
         await page.goto("https://in.pmiandu.com/s/")
         await page.wait_for_timeout(5000)
+
+
+        
