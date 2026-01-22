@@ -9,7 +9,7 @@ def load_login_data():
 		os.path.dirname(__file__),
 		"data",
 		"dte_app_login_data.json"
-	)
+	) 
 
 	with open(file_path, "r", encoding="utf-8") as f:
 		return json.load(f)["logins"] 
@@ -42,8 +42,8 @@ async def test_login(login_data):
 		await page.set_viewport_size({"width": 375, "height": 812})
 		await page.wait_for_timeout(10000)
 		
-		# # check
-		# # Make sure page is still alive
+		# check
+		# # # Make sure page is still alive
 		assert not page.is_closed()
 		# Wait until notification icon is visible
 		notif = page.locator("a.notifications")
@@ -57,37 +57,135 @@ async def test_login(login_data):
 		await page.goto("https://in.pmiandu.com/s/")
 		await page.wait_for_timeout(5000)
 
-		assert not page.is_closed()
 
-		view_details = page.locator("a.btntop:visible").first
-		await view_details.click()
+		# STATIC code for the MONTHLY and WEEKLY TASK DOT SLEEK cards 
+		# assert not page.is_closed()
+		# view_details = page.locator("a.btntop:visible").first
+		# await view_details.click()
 
-		await page.wait_for_url("**/s/top", timeout=15000)
-		assert page.url.endswith("/s/top")
+		# await page.wait_for_url("**/s/top", timeout=15000)
+		# assert page.url.endswith("/s/top")
+		# # await page.wait_for_timeout(10000)
+		# await page.locator("a.back.d-flex").first.click()
+		# await page.goto("https://in.pmiandu.com/s/")
+		# await page.wait_for_timeout(5000)
+		# await page.locator("button[role='tab'][aria-label='2 of 6']").click(force=True)
+		# await page.wait_for_timeout(5000)
+
+		# start_task = page.get_by_role("link", name="Start the Task")
+		# await expect(start_task).to_be_visible(timeout=10000)
+		# await start_task.click()
+		# await page.wait_for_timeout(10000)
+		# await page.locator("a.back.d-flex").first.click()
+		# await page.goto("https://in.pmiandu.com/s/")
+		# await page.wait_for_timeout(10000)
+
+
+		 DYNAMIC CODE for the MONTHLY and WEEKLY TASK DOT SLEEK CARDS
+		Pause autoplay (critical)
+
+		await page.evaluate("$('.task-slider').slick('slickPause')")
+
+		dots = page.locator(".task-slider .slick-dots li button")
+		dot_count = await dots.count()
+
+		for i in range(dot_count):
+			# Move slider
+			await dots.nth(i).click()
+			await page.wait_for_timeout(3000)
+			
+			# Get ACTIVE, NON-CLONED card
+			active_card = page.locator(
+        		".task-slider .slick-slide.slick-active:not(.slick-cloned)"
+    		).first
+			
+			await active_card.wait_for(state="visible", timeout=5000)
+			
+			# Click CTA inside card (Start the Task / View Details)
+			cta = active_card.locator("a[href*='/s/']")
+			
+			if await cta.count() > 0:
+				href = await cta.get_attribute("href")
+				print(f"Clicking card: {href}")
+				
+				await cta.first.click(force=True)
+				# Wait for navigation
+				await page.wait_for_load_state("domcontentloaded")
+				await page.wait_for_timeout(5000)
+				
+				# Go back
+				await page.go_back()
+				await page.wait_for_load_state("domcontentloaded")
+			else:
+				print("No clickable CTA in this card")
+
+
+		 DYNAMIC CODE for IMAGE and VIDEO section DOT SLEEK CARDS
+		# Pause autoplay once
+		await page.evaluate("$('.video-slider').slick('slickPause');")
+
+		dots = page.locator(".video-slider .slick-dots li button")
+		dot_count = await dots.count()
+
+		for i in range(dot_count):
+			await dots.nth(i).click()
+			await page.wait_for_timeout(10000)
+			
+			# 1️⃣ Get active slide ONLY
+			active_slide = page.locator(
+				".video-slider .slick-slide.slick-current.slick-active:not(.slick-cloned)"
+			)
+			
+			await active_slide.wait_for(state="visible", timeout=5000)
+			# 2️⃣ Check if IMAGE card exists
+			image_card = active_slide.locator("a[data-fancybox]")
+			
+			if await image_card.count() > 0:
+				# ---------- IMAGE ----------
+				href = await image_card.get_attribute("href")
+				print(f"IMAGE card → {href}")
+				
+				await image_card.click(force=True)
+				await page.wait_for_load_state("load")
+				await page.wait_for_timeout(10000)
+				await page.go_back()
+				await page.wait_for_load_state("domcontentloaded")
+				
+			else:
+				# ---------- VIDEO ----------
+				print("VIDEO card detected")
+				# Click the video card itself (NOT a[data-fancybox])
+				await active_slide.click(force=True)
+				# Wait until iframe is injected
+				await page.wait_for_function(
+            		"""
+            		() => Array.from(document.querySelectorAll('iframe'))
+                	.some(f => f.src && f.src.includes('videomarketingplatform'))
+            		""",
+            		timeout=30000
+        		)
+				
+				# 3️⃣ Wait for the play button 
+				play_button = page.locator("button.big-play-button")
+
+				# await play_button.wait_for(state="visible", timeout=20000)
+
+				# # Ensure it is clickable
+				# await play_button.scroll_into_view_if_needed()
+
+				# Click PLAY
+				await play_button.click(force=True)
+
+				# Let video start
+				await page.wait_for_timeout(15000)
+
+		cta = page.locator("a.btnRed[href*='pmi-reward-page']")
+		await cta.wait_for(state="visible", timeout=10000)
+		await cta.scroll_into_view_if_needed()
+		await cta.click()
 		await page.wait_for_timeout(10000)
 		await page.locator("a.back.d-flex").first.click()
-		await page.goto("https://in.pmiandu.com/s/")
-		await page.wait_for_timeout(5000)
-		await page.locator("button[role='tab'][aria-label='2 of 27']").click(force=True)
 		await page.wait_for_timeout(5000)
 
-		start_task = page.get_by_role("link", name="Start the Task")
-		await expect(start_task).to_be_visible(timeout=10000)
-		await start_task.click()
-		await page.wait_for_timeout(10000)
-		await page.locator("a.back.d-flex").first.click()
-		await page.goto("https://in.pmiandu.com/s/")
-		await page.wait_for_timeout(10000)
-		
-		assert not page.is_closed()
-		# Wait for the carousel to be visible
-		await page.wait_for_selector(".video-slider.slick-initialized", state="visible", timeout=20000)
-		
-		# Locate the image by its exact src
-		image_card = page.locator("img[src='https://llp-pmi-prod-assets.s3.ap-south-1.amazonaws.com/My_time_my_gold_2x_1.png']")
-		
-		# Wait until it's visible
-		await image_card.wait_for(state="visible", timeout=5000)
-		
-		
-		
+
+				
